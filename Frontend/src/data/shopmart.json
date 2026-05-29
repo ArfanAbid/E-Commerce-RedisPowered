@@ -1,0 +1,171 @@
+{
+  "store": {
+    "name": "ShopMart",
+    "tagline": "Your one-stop online shopping destination in Pakistan",
+    "contact": {
+      "supportAgent": "Arfan Abid",
+      "phone": "0302 0103050",
+      "email": "support@shopmart.pk",
+      "workingHours": "Monday to Saturday, 9am – 6pm"
+    }
+  },
+
+  "currentOffers": [
+    {
+      "title": "Summer Mega Sale",
+      "description": "Up to 50% off on electronics and home appliances",
+      "code": null,
+      "validUntil": "2024-12-31"
+    },
+    {
+      "title": "Friday Flash Deal",
+      "description": "30% off on all fashion items every Friday",
+      "code": "FRIDAY30",
+      "validUntil": "Every Friday"
+    },
+    {
+      "title": "New User Welcome Discount",
+      "description": "15% off on your very first order",
+      "code": "WELCOME15",
+      "validUntil": "One-time use"
+    },
+    {
+      "title": "Free Shipping",
+      "description": "Free standard shipping on all orders above Rs. 1,500",
+      "code": null,
+      "validUntil": "Ongoing"
+    },
+    {
+      "title": "Bundle & Save",
+      "description": "Buy 3 or more items from the same category and get an extra 10% off",
+      "code": "BUNDLE10",
+      "validUntil": "Ongoing"
+    }
+  ],
+
+  "categories": [
+    {
+      "name": "Electronics",
+      "topProducts": ["Smartphones", "Laptops", "Wireless Earbuds", "Smartwatches", "Power Banks", "Tablet"]
+    },
+    {
+      "name": "Fashion",
+      "topProducts": ["Men's Kurta", "Women's Lawn Suit", "Sneakers", "Handbags", "Sunglasses", "Watches"]
+    },
+    {
+      "name": "Home & Kitchen",
+      "topProducts": ["Cookware Sets", "Sofa Sets", "Bed Sheets", "Air Fryer", "Blender", "LED Lights"]
+    },
+    {
+      "name": "Beauty & Personal Care",
+      "topProducts": ["Skincare Kits", "Makeup Palettes", "Perfumes", "Hair Straighteners", "Face Wash"]
+    },
+    {
+      "name": "Sports & Outdoors",
+      "topProducts": ["Cricket Bat & Ball", "Dumbbells", "Yoga Mat", "Cycling Helmet", "Running Shoes"]
+    },
+    {
+      "name": "Books & Stationery",
+      "topProducts": ["MDCAT Prep Books", "Novel Collections", "Planners", "Art Supplies", "Pens & Markers"]
+    }
+  ],
+
+  "policies": {
+    "returns": {
+      "window": "7 days from delivery date",
+      "eligibility": "Item must be unused, undamaged, and in original packaging with all tags attached",
+      "nonReturnable": ["Undergarments", "Earrings", "Perishable items", "Customized products"],
+      "process": "Go to My Orders → Select item → Click 'Return'. Refund is processed within 3–5 business days after we receive the item.",
+      "damagedItem": "Report a damaged or wrong item within 48 hours through My Orders → Report Issue. We will arrange a free replacement or full refund."
+    },
+    "shipping": {
+      "standard": {
+        "duration": "3–5 business days",
+        "cost": "Free on orders above Rs. 1,500. Rs. 150 for orders below Rs. 1,500."
+      },
+      "express": {
+        "duration": "1–2 business days",
+        "cost": "Rs. 300 extra charge"
+      },
+      "coverage": "Nationwide delivery across all major cities in Pakistan including Karachi, Lahore, Islamabad, Peshawar, Quetta, Multan, Faisalabad"
+    },
+    "payments": {
+      "availableMethods": [
+        "Cash on Delivery (COD)",
+        "Visa / Mastercard Credit & Debit Cards",
+        "JazzCash",
+        "EasyPaisa",
+        "Bank Transfer"
+      ],
+      "codDetails": "COD available on orders up to Rs. 50,000. Available in most cities across Pakistan.",
+      "security": "All online payments are secured with 256-bit SSL encryption. ShopMart never stores your card details."
+    },
+    "cancellation": {
+      "beforeShipment": "You can cancel an order anytime before it is shipped — go to My Orders and click Cancel.",
+      "afterShipment": "Once shipped, cancellation is not possible. You may return the item after delivery.",
+      "refundTimeline": "Refund for cancelled orders is processed within 3–5 business days."
+    }
+  },
+
+  "sellerProgram": {
+    "howToRegister": "Visit ShopMart, click 'Become a Seller', fill in your business name, upload your CNIC copy, verify your mobile number, and add a bank account for payouts.",
+    "requirements": ["Valid CNIC", "Active Pakistani mobile number", "Bank account or JazzCash/EasyPaisa wallet"],
+    "commission": "ShopMart charges a 5% to 15% commission depending on the product category.",
+    "payoutSchedule": "Seller payouts are processed every 14 days via bank transfer or mobile wallet.",
+    "benefits": ["Access to millions of shoppers", "Free product listing", "Seller dashboard with analytics", "Promotional campaign support"]
+  },
+
+  "orderTracking": {
+    "howToTrack": "Log into your ShopMart account → Go to 'My Orders' → Click on the order → View live tracking status.",
+    "statuses": [
+      { "status": "Order Placed", "meaning": "Your order has been received and is being confirmed." },
+      { "status": "Processing", "meaning": "The seller is preparing your item for shipment." },
+      { "status": "Shipped", "meaning": "Your order is on the way. Tracking number is available." },
+      { "status": "Out for Delivery", "meaning": "The delivery rider is on the way to your address." },
+      { "status": "Delivered", "meaning": "Your order has been delivered successfully." }
+    ]
+  },
+
+  "faq": [
+    {
+      "question": "What are the best deals on ShopMart right now?",
+      "answer": "Right now, ShopMart is running a Summer Mega Sale with up to 50% off on electronics. Every Friday there is a 30% Fashion Flash Deal with code FRIDAY30. New users get 15% off their first order with code WELCOME15."
+    },
+    {
+      "question": "How do I track my order?",
+      "answer": "Go to My Orders in your account dashboard. Click on your order to see the real-time delivery status and tracking number once shipped."
+    },
+    {
+      "question": "Can I cancel my order?",
+      "answer": "Yes, you can cancel before the order is shipped. Go to My Orders, select your order, and click Cancel. Once shipped, cancellation is not possible but you can return it after delivery."
+    },
+    {
+      "question": "What if I receive a damaged or wrong item?",
+      "answer": "Report it within 48 hours through My Orders → Report Issue. ShopMart will arrange a free replacement or full refund."
+    },
+    {
+      "question": "Is Cash on Delivery available?",
+      "answer": "Yes, COD is available on orders up to Rs. 50,000 in most cities across Pakistan. Availability is confirmed at checkout based on your address."
+    },
+    {
+      "question": "How long does delivery take?",
+      "answer": "Standard delivery takes 3–5 business days and is free on orders above Rs. 1,500. Express delivery takes 1–2 business days for an extra Rs. 300."
+    },
+    {
+      "question": "What is the return policy?",
+      "answer": "You can return unused items in original packaging within 7 days of delivery. Initiate the return from My Orders. Refund is processed in 3–5 business days."
+    },
+    {
+      "question": "How do I become a seller on ShopMart?",
+      "answer": "Click 'Become a Seller' on ShopMart, fill in your business details, upload your CNIC, and verify your mobile number. Payouts are every 14 days."
+    },
+    {
+      "question": "What payment methods does ShopMart accept?",
+      "answer": "ShopMart accepts Cash on Delivery, Visa/Mastercard, JazzCash, EasyPaisa, and Bank Transfer. All online payments are SSL secured."
+    },
+    {
+      "question": "What are the most popular products?",
+      "answer": "Top-selling categories include Smartphones, Laptops, and Earbuds in Electronics; Lawn Suits and Sneakers in Fashion; and Cookware and Air Fryers in Home & Kitchen."
+    }
+  ]
+}

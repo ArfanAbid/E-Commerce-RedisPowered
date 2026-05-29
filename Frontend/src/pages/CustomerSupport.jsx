@@ -1,228 +1,304 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bot, Sparkles } from "lucide-react";
+import storeData from "../data/shopmart.json";
+
+const getContext = (query) => {
+    const q = query.toLowerCase();
+    const has = (...words) => words.some((w) => q.includes(w));
+    const { store, currentOffers, categories, policies, sellerProgram, orderTracking, faq } = storeData;
+
+    const parts = [];
+
+    // Store contact — always a short anchor
+    parts.push(`Support: ${store.contact.supportAgent} ${store.contact.phone} | Hours: ${store.contact.workingHours}`);
+
+    if (has("offer", "sale", "discount", "deal", "promo", "coupon", "code", "today", "best")) {
+        parts.push(
+            "OFFERS:\n" +
+            currentOffers.map((o) =>
+                `- ${o.title}: ${o.description}${o.code ? ` (Code: ${o.code})` : ""}${o.validUntil ? ` | Valid: ${o.validUntil}` : ""}`
+            ).join("\n")
+        );
+    }
+
+    if (has("product", "popular", "trending", "category", "thing", "buy", "item")) {
+        parts.push(
+            "CATEGORIES:\n" +
+            categories.map((c) => `- ${c.name}: ${c.topProducts.join(", ")}`).join("\n")
+        );
+    }
+
+    if (has("return", "refund", "damage", "wrong", "exchange", "replace")) {
+        const r = policies.returns;
+        parts.push(
+            `RETURNS: Window: ${r.window} | ${r.eligibility} | Process: ${r.process} | Damaged: ${r.damagedItem}`
+        );
+    }
+
+    if (has("ship", "deliver", "how long", "fast", "free shipping", "arrive")) {
+        const sh = policies.shipping;
+        parts.push(
+            `SHIPPING: Standard: ${sh.standard.duration}, ${sh.standard.cost} | Express: ${sh.express.duration}, ${sh.express.cost} | Coverage: ${sh.coverage}`
+        );
+    }
+
+    if (has("track", "where", "status", "shipped", "out for delivery")) {
+        const t = orderTracking;
+        parts.push(
+            `TRACKING: ${t.howToTrack}\nStatuses: ${t.statuses.map((s) => `${s.status}=${s.meaning}`).join(" | ")}`
+        );
+    }
+
+    if (has("pay", "payment", "cod", "cash", "card", "jazz", "easypaisa", "online", "wallet")) {
+        const p = policies.payments;
+        parts.push(
+            `PAYMENTS: ${p.availableMethods.join(", ")} | COD: ${p.codDetails} | Security: ${p.security}`
+        );
+    }
+
+    if (has("cancel")) {
+        const c = policies.cancellation;
+        parts.push(`CANCELLATION: ${c.beforeShipment} | After shipping: ${c.afterShipment} | Refund: ${c.refundTimeline}`);
+    }
+
+    if (has("sell", "seller", "vendor", "register", "commission", "payout")) {
+        const s = sellerProgram;
+        parts.push(
+            `SELLER: Register: ${s.howToRegister} | Requirements: ${s.requirements.join(", ")} | Commission: ${s.commission} | Payouts: ${s.payoutSchedule}`
+        );
+    }
+
+    // Nothing topic-specific matched — fall back to FAQ only
+    if (parts.length === 1) {
+        parts.push("FAQ:\n" + faq.map((f) => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n"));
+    }
+
+    return parts.join("\n\n");
+};
+
+const buildSystemPrompt = (context) =>
+    `You are ShopBot, the virtual assistant for ShopMart. Answer using ONLY the data below. If not in the data, say you don't have that info and give the support contact. Never answer off-topic questions. Be concise.\n\nDATA:\n${context}`;
+
+
+const BANNED_WORDS = ["sex", "politics", "violence", "religion"];
+
+const QUESTIONS = [
+    "What is the best sale offer on ShopMart today?",
+    "How can I start selling on ShopMart?",
+    "What are the popular things on ShopMart?",
+    "Is cash on delivery better than online payment?",
+];
 
 const CustomerSupport = () => {
     const [response, setResponse] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [query, setQuery] = useState("");
 
-    const questions = [
-        'What is the best sale offer on ShopMart today?',
-        'How can I start selling on ShopMart?',
-        'What are the Popular Things on ShopMart?',
-        'Is cash on delivery better than online payment?',
-    ];
+    const handleSubmit = async (userQuery) => {
+        const trimmed = userQuery.trim();
+        if (!trimmed || isLoading) return;
 
-    const bannedWords = ["sex", "politics", "violence", "religion"];
-
-    const handleSubmit = async (query) => {
-        if (bannedWords.some((word) => query.toLowerCase().includes(word))) {
+        if (BANNED_WORDS.some((w) => trimmed.toLowerCase().includes(w))) {
             setResponse("I'm only able to help with questions about our store, products, and services.");
             return;
         }
 
+        setResponse("");
         setIsLoading(true);
-        const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
         if (!apiKey) {
-            console.error("API Key is missing or not loaded.");
-            setResponse("Error: Missing API key.");
+            setResponse("Error: API key is not configured.");
             setIsLoading(false);
             return;
         }
 
         try {
-            const payload = {
-                model: "llama3-8b-8192",
-                messages: [
-                            {
-                            role: "system",
-                            content: `
-                            You are ShopBot — a professional virtual assistant for ShopMart, an online eCommerce platform similar to Daraz. Your job is to help customers with:
-
-                            • Ongoing sales, discounts, and promotional offers  
-                            • Popular products and trending categories  
-                            • Order tracking and shipping information  
-                            • Return, refund, and cancellation policies  
-                            • Payment methods (cash on delivery, credit/debit card, wallet)  
-                            • How to register as a seller or use the ShopMart platform
-
-                            ❌ You MUST NOT answer any question unrelated to ShopMart. This includes topics like programming, education, politics, AI, religion, technology, or personal questions.
-
-                            If a user asks an off-topic or inappropriate question, politely respond with:
-
-                            > "I'm here to help with ShopMart-related questions like your orders, products, or services. Please ask something related to ShopMart."
-
-                            ✅ Keep replies brief, helpful, and professional. Do not guess or invent answers. If you are unsure, refer the user to human support.
-
-                            📞 For further assistance, you may contact our support representative:
-                            **Arfan Abid – 0302 0103050**
-
-                            `.trim()
-                            }
-,
-                    { role: "user", content: query },
-                ],
-            };
-
-            const result = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${apiKey}`,
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    model: "llama-3.1-8b-instant",
+                    max_tokens: 300,
+                    messages: [
+                        { role: "system", content: buildSystemPrompt(getContext(trimmed)) },
+                        { role: "user", content: trimmed },
+                    ],
+                }),
             });
 
-            if (!result.ok) throw new Error(`API Error: ${result.statusText}`);
+            const data = await res.json();
 
-            const data = await result.json();
+            if (!res.ok) {
+                const msg = data?.error?.message || res.statusText;
+                console.error("Groq API error:", msg);
+                setResponse(`Error: ${msg}`);
+                return;
+            }
+
             setResponse(data.choices[0].message.content);
-        } catch (error) {
-            console.error("Error during API call:", error);
-            setResponse("Sorry, there was an error processing your request.");
+        } catch (err) {
+            console.error("Groq API error:", err);
+            setResponse(`Network error: ${err.message}. Check your connection and try again.`);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleQueryChange = (e) => setQuery(e.target.value);
-
-    const handlePredefinedQuestionClick = (question) => {
-        setQuery(question);
-        handleSubmit(question);
-    };
-
     useEffect(() => {
-        const handleKeyPress = (event) => {
-            if (event.key === 'Enter' && query.trim()) {
+        const onKeyPress = (e) => {
+            if (e.key === "Enter" && query.trim() && e.target.tagName !== "INPUT") {
                 handleSubmit(query);
             }
         };
-        document.addEventListener('keypress', handleKeyPress);
-        return () => {
-            document.removeEventListener('keypress', handleKeyPress);
-        };
+        document.addEventListener("keypress", onKeyPress);
+        return () => document.removeEventListener("keypress", onKeyPress);
     }, [query]);
 
     return (
         <div className="min-h-screen text-gray-300 flex flex-col">
+            {/* Title */}
             <motion.div
-                initial={{ opacity: 0, y: -50 }}
+                initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="py-8"
+                className="py-10 text-center"
             >
-                <h1 className="text-4xl md:text-5xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-600">
-                    Customer Support
-                </h1>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg">
+                        <Bot className="w-6 h-6 text-white" />
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-600">
+                        Customer Support
+                    </h1>
+                </div>
+                <p className="text-gray-500 text-sm flex items-center justify-center gap-1.5 mt-1">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    Powered by Groq AI · ShopBot
+                </p>
             </motion.div>
-            <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+
+            <main className="flex-grow container mx-auto px-4 pb-12 max-w-4xl">
+                {/* Search bar */}
                 <motion.form
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        if (query.trim()) handleSubmit(query);
-                    }}
+                    onSubmit={(e) => { e.preventDefault(); handleSubmit(query); }}
                     className="mb-8"
                 >
-                    <div className="flex shadow-lg">
+                    <div className="flex shadow-lg rounded-xl overflow-hidden ring-1 ring-gray-700 focus-within:ring-2 focus-within:ring-emerald-500 transition-all duration-300">
                         <input
                             type="text"
                             value={query}
-                            onChange={handleQueryChange}
+                            onChange={(e) => setQuery(e.target.value)}
                             maxLength={200}
                             placeholder="Ask about products, orders, delivery, or offers..."
-                            className="flex-grow px-6 py-4 bg-gray-700 text-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-lg transition-all duration-300"
+                            className="flex-grow px-6 py-4 bg-gray-800 text-gray-200 placeholder-gray-500 focus:outline-none text-base"
                         />
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-r-lg transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 text-lg"
+                            disabled={isLoading || !query.trim()}
+                            className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold transition-all duration-300 focus:outline-none disabled:opacity-50 text-base min-w-[90px] flex items-center justify-center"
                         >
                             {isLoading ? (
-                                <span className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></span>
+                                <span className="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
                             ) : (
                                 "Ask"
                             )}
                         </button>
                     </div>
+                    <p className="text-right text-xs text-gray-600 mt-1 pr-1">{query.length}/200</p>
                 </motion.form>
 
+                {/* Common questions */}
                 <motion.div
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
+                    transition={{ duration: 0.5, delay: 0.35 }}
                     className="mb-8"
                 >
-                    <h2 className="text-2xl font-semibold mb-4 text-emerald-400">
-                        Common Questions
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {questions.map((question, index) => (
+                    <h2 className="text-xl font-semibold mb-4 text-emerald-400">Common Questions</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {QUESTIONS.map((q, i) => (
                             <motion.button
-                                key={index}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handlePredefinedQuestionClick(question)}
-                                className="text-left px-6 py-4 bg-gray-700 hover:bg-gray-600 rounded-lg transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-md"
+                                key={i}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => { setQuery(q); handleSubmit(q); }}
+                                className="text-left px-5 py-4 bg-gray-800 border border-gray-700 hover:border-emerald-500/60 rounded-xl transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-md text-sm text-gray-300 hover:text-white"
                             >
-                                {question}
+                                <span className="text-emerald-400 mr-2 font-bold">→</span>
+                                {q}
                             </motion.button>
                         ))}
                     </div>
                 </motion.div>
 
+                {/* Response area */}
                 <motion.div
-                    initial={{ opacity: 0, y: 50 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
-                    className="rounded-lg p-6 min-h-[200px] transition-all duration-300 ease-in-out bg-gray-700 shadow-xl"
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                    className="rounded-xl border border-gray-700 bg-gray-800 shadow-xl overflow-hidden"
                 >
-                    <AnimatePresence mode="wait">
-                        {isLoading ? (
-                            <motion.div
-                                key="loading"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex justify-center items-center h-full"
-                            >
-                                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-500"></div>
-                            </motion.div>
-                        ) : response ? (
-                            <motion.div
-                                key="response"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="text-gray-300 space-y-4"
-                            >
-                                <p className="text-lg leading-relaxed">{response}</p>
-                            </motion.div>
-                        ) : (
-                            <motion.p
-                                key="placeholder"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="text-gray-400 italic text-lg text-center"
-                            >
-                                Your response will appear here...
-                            </motion.p>
-                        )}
-                    </AnimatePresence>
+                    <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-700">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-xs text-gray-400 font-medium tracking-wide">ShopBot Response</span>
+                    </div>
+                    <div className="p-6 min-h-[200px] flex items-center">
+                        <AnimatePresence mode="wait">
+                            {isLoading ? (
+                                <motion.div
+                                    key="loading"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="w-full flex flex-col items-center justify-center gap-3"
+                                >
+                                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500" />
+                                    <p className="text-sm text-gray-500">ShopBot is thinking...</p>
+                                </motion.div>
+                            ) : response ? (
+                                <motion.div
+                                    key="response"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    className="w-full"
+                                >
+                                    <p className="text-gray-200 text-base leading-relaxed whitespace-pre-wrap">
+                                        {response}
+                                    </p>
+                                </motion.div>
+                            ) : (
+                                <motion.p
+                                    key="placeholder"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="text-gray-500 italic text-base text-center w-full"
+                                >
+                                    Your response will appear here...
+                                </motion.p>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </motion.div>
             </main>
+
             <motion.footer
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="text-center py-4 text-gray-500 text-sm"
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="text-center py-4 text-gray-600 text-xs"
             >
-                © 2024 Customer Support. All rights reserved.
+                © 2024 ShopMart Customer Support · Powered by Groq AI
             </motion.footer>
         </div>
     );
